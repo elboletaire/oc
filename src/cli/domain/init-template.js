@@ -1,11 +1,11 @@
 'use strict';
 
 var fs = require('fs-extra');
-var ora = require('ora');
 var spawn = require('cross-spawn');
 var path = require('path');
 var colors = require('colors/safe');
 var execSync = require('child_process').execSync;
+var Spinner = require('cli-spinner').Spinner;
 
 function shouldUseYarn() {
   try {
@@ -23,16 +23,14 @@ module.exports = function (componentName, templateType, callback) {
   var componentPath = path.join(process.cwd(), componentName);
 
   // Step 1 - Create componentName directory
-  var step1 = ora(`Creating directory...`).start();
+  var step1 = new Spinner(`Creating directory...`);
+  step1.start();
   fs.ensureDirSync(componentName);
-  step1.succeed(`Created directory "${componentName}"`);
-
+  step1.stop(true);
+  console.log(`${colors.green('✔')} Created directory "${componentName}"`);
+  
   // Initialize npm
-  var initProc = spawn.sync(cli, ['init', '--yes'], { silent: true, cwd: componentName });
-
-  initProc.on('error', function (error) {
-    return callback('template type not valid');
-  });
+  var initProc = spawn.sync(cli, ['init', '--yes'], { silent: true, cwd: componentName });  
 
   // Step 2 - Install template module
   var local = /^\.\/|^\//.test(templateType);
@@ -53,10 +51,8 @@ module.exports = function (componentName, templateType, callback) {
         : templateType
       ]
   };
-  var step2 = ora(
-    `Installing ${templateType} from ${local ? 'local' : 'npm'}...`
-  ).start();
-
+  var step2 = new Spinner(`Installing ${templateType} from ${local ? 'local' : 'npm'}...`);
+  step2.start();
 
   var installProc = spawn(cli, args[cli], {silent: true, cwd: componentName});
 
@@ -69,13 +65,15 @@ module.exports = function (componentName, templateType, callback) {
       return callback('template type not valid');
     }
 
-    step2.succeed(
-      `Installed ${templateType} from ${local ? 'local' : 'npm'}`
+    step2.stop(true);
+    console.log(
+      `${colors.green('✔')} Installed ${templateType} from ${local ? 'local' : 'npm'}`
     );
 
     // Step 3 - Copy boilerplates from the template module
     try {
-      var step3 = ora(`Generating boilerplate files...`).start();
+      var step3 = new Spinner(`Creating boilerplate files...`);
+      step3.start();
 
       var baseComponentPath = path.join(
         componentPath,
@@ -95,7 +93,8 @@ module.exports = function (componentName, templateType, callback) {
       packageContent.dependencies = initializedPackage.dependencies;
 
       fs.writeJsonSync(componentPath + '/package.json', packageContent);
-      step3.succeed(`Boilerplate files generated at ${componentPath}`);
+      step3.stop();
+      console.log(`${colors.green('✔')} Boilerplate files created at ${componentPath}`);
       return callback(null, { ok: true });
     } catch (e) {
       console.error(colors.red(
