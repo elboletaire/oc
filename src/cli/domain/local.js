@@ -35,7 +35,7 @@ module.exports = function(dependencies){
     },
     getComponentsByDir: getComponentsByDir(dependencies),
     getLocalNpmModules: getLocalNpmModules(),
-    init: function(componentName, templateType, callback){
+    init: function(componentName, templateType, options, callback){
 
       if(!validator.validateComponentName(componentName)){
         return callback('name not valid');
@@ -65,7 +65,7 @@ module.exports = function(dependencies){
         }
       }
       try {
-        initTemplate(componentName, templateType, callback);
+        initTemplate(componentName, templateType, options, callback);
       } catch (e) {
         return callback('template type not valid');
       }

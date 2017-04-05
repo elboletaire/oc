@@ -18,7 +18,8 @@ function shouldUseYarn() {
 
 var cli = shouldUseYarn() ? 'yarn' : 'npm';
 
-module.exports = function (componentName, templateType, callback) {
+module.exports = function (componentName, templateType, options, callback) {
+  var logger = options.logger;
   var templatePath = path.resolve(process.cwd(), templateType);
   var componentPath = path.join(process.cwd(), componentName);
 
@@ -27,12 +28,11 @@ module.exports = function (componentName, templateType, callback) {
   step1.start();
   fs.ensureDirSync(componentName);
   step1.stop(true);
-  console.log(`${colors.green('✔')} Created directory "${componentName}"`);
+  logger.log(`${colors.green('✔')} Created directory "${componentName}"`);
   
   // Initialize npm
   var initProc = spawn.sync(cli, ['init', '--yes'], { silent: true, cwd: componentName });  
-  var initializedPackage = require(componentPath + '/package');
-  
+
   // Step 2 - Install template module
   var local = /^\.\/|^\//.test(templateType);
   var args = {
@@ -60,21 +60,22 @@ module.exports = function (componentName, templateType, callback) {
   installProc.on('error', function (error) {
     return callback('template type not valid');
   });
-
+  
   installProc.on('close', function (code) {
     if (code !== 0) {
       return callback('template type not valid');
     }
+    var initializedPackage = require(componentPath + '/package');
     var templatePackage = require(componentPath + '/node_modules/' + templateType + '/package');
 
     step2.stop(true);
-    console.log(
+    logger.log(
       `${colors.green('✔')} Installed ${templateType} from ${local ? 'local' : 'npm'}`
     );
 
     // Step 3 - Copy boilerplates from the template module
     try {
-      var step3 = new Spinner(`Creating boilerplate files...`);
+      var step3 = new Spinner(`Blueprinting component...`);
       step3.start();
 
       var baseComponentPath = path.join(
@@ -95,7 +96,7 @@ module.exports = function (componentName, templateType, callback) {
 
       fs.writeJsonSync(componentPath + '/package.json', packageContent);
       step3.stop();
-      console.log(`${colors.green('✔')} Boilerplate files created at ${componentPath}`);
+      logger.log(`${colors.green('✔')} Files created at ${componentPath}`);
       return callback(null, { ok: true });
     } catch (error) {
       return callback(`Blueprinting failed. Please open an issue on ${templatePackage.bugs.url} with the following information: ${error}`);
