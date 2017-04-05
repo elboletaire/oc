@@ -4022,6 +4022,11 @@
         }
       }
     },
+    "cli-spinner": {
+      "version": "0.2.6",
+      "from": "cli-spinner@0.2.6",
+      "resolved": "https://registry.npmjs.org/cli-spinner/-/cli-spinner-0.2.6.tgz"
+    },
     "colors": {
       "version": "1.1.2",
       "from": "colors@1.1.2",
@@ -4029,7 +4034,7 @@
     },
     "cross-spawn": {
       "version": "5.1.0",
-      "from": "cross-spawn@latest",
+      "from": "cross-spawn@5.1.0",
       "resolved": "https://registry.npmjs.org/cross-spawn/-/cross-spawn-5.1.0.tgz",
       "dependencies": {
         "lru-cache": {
