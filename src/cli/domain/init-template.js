@@ -31,7 +31,8 @@ module.exports = function (componentName, templateType, callback) {
   
   // Initialize npm
   var initProc = spawn.sync(cli, ['init', '--yes'], { silent: true, cwd: componentName });  
-
+  var initializedPackage = require(componentPath + '/package');
+  
   // Step 2 - Install template module
   var local = /^\.\/|^\//.test(templateType);
   var args = {
@@ -64,6 +65,7 @@ module.exports = function (componentName, templateType, callback) {
     if (code !== 0) {
       return callback('template type not valid');
     }
+    var templatePackage = require(componentPath + '/node_modules/' + templateType + '/package');
 
     step2.stop(true);
     console.log(
@@ -79,15 +81,14 @@ module.exports = function (componentName, templateType, callback) {
         componentPath,
         'node_modules',
         templateType,
-        'component'
+        'blueprint'
       );
 
       var baseComponentFiles = path.join(baseComponentPath, 'src');
-
       fs.copySync(baseComponentFiles, componentPath);
 
-      var packageContent = require(baseComponentPath + '/package');
-      var initializedPackage = require(componentPath + '/package');
+      var packageContent = require(baseComponentPath + '/src/package');
+      
 
       packageContent.name = componentName;
       packageContent.dependencies = initializedPackage.dependencies;
@@ -96,12 +97,8 @@ module.exports = function (componentName, templateType, callback) {
       step3.stop();
       console.log(`${colors.green('✔')} Boilerplate files created at ${componentPath}`);
       return callback(null, { ok: true });
-    } catch (e) {
-      console.error(colors.red(
-        `Boilerplate generation failed, please report to ${templateType} owner`
-        )
-      );
-      return callback('An error happened when initialising the component');
+    } catch (error) {
+      return callback(`Blueprinting failed. Please open an issue on ${templatePackage.bugs.url} with the following information: ${error}`);
     }
   });
 };
